@@ -143,7 +143,7 @@ I18N_FUNCTION_CALL=["_", "ugettext", "gettext"]
 INDENT_DICTIONARY_VALUE=False
 
 # The number of columns to use for indentation.
-INDENT_WIDTH=4
+INDENT_WIDTH=2
 
 # Set to True to prefer indented blank lines rather than empty
 INDENT_BLANK_LINES=False
@@ -260,7 +260,7 @@ SPLIT_PENALTY_IMPORT_NAMES=1000
 SPLIT_PENALTY_LOGICAL_OPERATOR=300
 
 # Use the Tab character for indentation.
-USE_TABS=True
+USE_TABS=False
 
 # Allow splits before the dictionary value.
 ALLOW_SPLIT_BEFORE_DICT_VALUE=False

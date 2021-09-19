@@ -4,9 +4,14 @@
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
   "python.formatting.provider": "yapf",
-  "python.formatting.yapfArgs": ["--style", ".style.yapf"],
+  "python.formatting.yapfArgs": [
+    "--style",
+    "${workspaceFolder}/.style.yapf"
+  ],
   "python.linting.enabled": true,
   "python.linting.lintOnSave": true,
   "python.linting.pylintEnabled": true,
-  "python.linting.pylintArgs": [".pylintrc"]
+  "python.linting.pylintArgs": [
+    ".pylintrc"
+  ]
 }
