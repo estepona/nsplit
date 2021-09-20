@@ -1,3 +1,5 @@
+import os
+from collections import defaultdict
 from os.path import abspath, normpath
 from pathlib import Path
 
@@ -10,6 +12,8 @@ BYTES_PER_GB = 1_073_741_824
 KB_SUFFIX_LOWERCASE = 'kb'
 MB_SUFFIX_LOWERCASE = 'mb'
 GB_SUFFIX_LOWERCASE = 'gb'
+
+SPLITTED_PARTS_PATTERN = '*.*.p*'
 
 
 def get_path(path: str) -> Path:
@@ -25,10 +29,12 @@ def cli():
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-c', '--chunk', type=int, help='number of chunks to output')
 @click.option('-s', '--size-per-chunk', type=str, help='size of each chunk')
-def split(src: click.Path, chunk: int, size_per_chunk: str):
+def split(src: str, chunk: int, size_per_chunk: str):
   """ Split the video into several chunks by specifying EITHER:\n
   - number of chunks with --chunk flag\n
   - size of each chunk and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
+
+  SRC is the file path of the video to be splitted.
   """
   if (not chunk) and (not size_per_chunk):
     click.echo('either --chunk or --size-per-chunk should be provided')
@@ -84,9 +90,63 @@ def split(src: click.Path, chunk: int, size_per_chunk: str):
 
 
 @cli.command()
-@click.argument('src', nargs=-1, type=click.Path(exists=True))
-def merge(src: click.Path):
-  return
+@click.argument('src', nargs=1, type=click.Path(exists=True))
+@click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
+def merge(src: str, remove: bool):
+  """ Merge NVP splitted videos into one.
+
+  NVP splitted videos can be identified with '.p1', '.p2' (etc.) appended to the original video's name (path).
+
+  If multiple videos that are splitted are found, user can choose which one to merge.
+
+  SRC is the directory path that contains (parent to) splitted videos.
+  """
+  dirpath = get_path(src)
+
+  all_parts = list(dirpath.glob(SPLITTED_PARTS_PATTERN))
+  if not all_parts:
+    click.echo('no splitted video parts found')
+    return
+
+  videos = defaultdict(list)
+  for p in all_parts:
+    name = p.stem
+    videos[name].append(p)
+
+  video_names = list(videos.keys())
+  if len(video_names) >= 2:
+    question = f'found {len(video_names)} splitted videos, choose one to proceed:\n'
+    for i, v in enumerate(video_names):
+      question += f'{i+1} - {v}\n'
+    question += 'your answer'
+
+    video_choice = click.prompt(question, type=int)
+    while (video_choice > len(video_names)) or (video_choice < 1):
+      video_choice = click.prompt('incorrect input, please try again', type=int)
+    video = video_names[video_choice - 1]
+  else:
+    video = video_names[0]
+
+  parts = sorted(videos[video], key=lambda x: x.suffix)
+  merged = b''
+  for p in parts:
+    with open(p, 'rb') as file:
+      merged += file.read()
+
+  dst = parts[0].parent / parts[0].stem
+  if dst.is_file():
+    filename = parts[0].stem.split('.')[0]
+    extension = parts[0].stem.split('.')[1]
+    dst = parts[0].parent / f'{filename}_copy.{extension}'
+
+  with open(dst, 'wb') as file:
+    file.write(merged)
+    click.echo(f'merged {dst}')
+
+  if remove:
+    for p in parts:
+      os.remove(p)
+      click.echo(f'removed {p}')
 
 
 if __name__ == '__main__':
