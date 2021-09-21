@@ -24,7 +24,7 @@ def get_path(path: str) -> Path:
 def cli():
   return
 
-
+# TODO: split large file causes problem
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-c', '--chunk', type=int, help='number of chunks to output')
@@ -89,6 +89,7 @@ def split(src: str, chunk: int, size_per_chunk: str):
       click.echo(f'generated {filename}')
 
 
+# TODO: try if merging into a large file is a problem
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
