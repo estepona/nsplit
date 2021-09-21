@@ -55,14 +55,16 @@ def split(src: str, chunk: int, size_per_chunk: str):
     click.echo('both --chunk and --size-per-chunk provided, using --chunk...')
   use_chunk = bool(chunk)
 
+  # TODO: no need to read at first?
   with open(src, 'rb') as file:
     data = file.read()
 
+  # TODO: read size with os.stat?
   size = len(data)
   chunk_indexes = []
 
   if use_chunk:
-    spc = size // chunk
+    spc = (size // chunk) if (size % chunk == 0) else (size // (chunk + 1))
   else:
     spc_num = int(size_per_chunk[:-2])
     spc_unit = size_per_chunk[-2:].lower()
