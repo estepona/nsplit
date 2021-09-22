@@ -2,6 +2,7 @@ import os
 from collections import defaultdict
 from os.path import abspath, normpath
 from pathlib import Path
+from time import time
 
 import click
 
@@ -9,20 +10,45 @@ BYTES_PER_KB = 1_024
 BYTES_PER_MB = 1_048_576
 BYTES_PER_GB = 1_073_741_824
 
+MAX_BUFFER_SIZE = BYTES_PER_MB * 32
+
 KB_SUFFIX_LOWERCASE = 'kb'
 MB_SUFFIX_LOWERCASE = 'mb'
 GB_SUFFIX_LOWERCASE = 'gb'
 
 SPLITTED_PARTS_PATTERN = '*.*.p*'
 
+START_TIME = time()
+
+
+def get_time_passed() -> int:
+  return int(time() - START_TIME)
+
 
 def get_path(path: str) -> Path:
   return Path(abspath(normpath(path)))
 
 
+def read_in_chunks(file_object, chunk_size: int):
+  while True:
+    data = file_object.read(chunk_size)
+    if not data:
+      break
+
+    yield data
+
+
+def write_splitted_video(path: str, part: int, data: bytes):
+  filename = get_path(f'{path}.p{part}')
+  with open(filename, 'wb') as pf:
+    pf.write(data)
+    click.echo(f'[{get_time_passed()}s] generated {filename}')
+
+
 @click.group()
 def cli():
   return
+
 
 # TODO: split large file causes problem
 @cli.command()
@@ -55,16 +81,11 @@ def split(src: str, chunk: int, size_per_chunk: str):
     click.echo('both --chunk and --size-per-chunk provided, using --chunk...')
   use_chunk = bool(chunk)
 
-  # TODO: no need to read at first?
-  with open(src, 'rb') as file:
-    data = file.read()
-
-  # TODO: read size with os.stat?
-  size = len(data)
+  size = os.stat(src).st_size
   chunk_indexes = []
 
   if use_chunk:
-    spc = (size // chunk) if (size % chunk == 0) else (size // (chunk + 1))
+    spc = (size // chunk) if (size % chunk == 0) else (size // (chunk+1))
   else:
     spc_num = int(size_per_chunk[:-2])
     spc_unit = size_per_chunk[-2:].lower()
@@ -76,22 +97,60 @@ def split(src: str, chunk: int, size_per_chunk: str):
     elif spc_unit == GB_SUFFIX_LOWERCASE:
       spc = spc_num * BYTES_PER_GB
 
-  start = 0
-  end = spc
-  while size > 0:
-    chunk_indexes.append((start, end))
-    start += spc
-    end += spc
-    size -= spc
+  chunk_size = min(spc, MAX_BUFFER_SIZE)
+  with open(src, 'rb') as f:
+    cur = b''
+    nxt = b''
+    cur_l = 0
+    part = 1
+  
+    # TODO: write to output file as we go and close it when done
 
-  for i, (start_, end_) in enumerate(chunk_indexes):
-    filename = get_path(f'{src}.p{i+1}')
-    with open(filename, 'wb') as file:
-      file.write(data[start_:end_])
-      click.echo(f'generated {filename}')
+    for cnk in read_in_chunks(f, chunk_size):
+      if cur_l == spc:
+        write_splitted_video(src, part, cur)
+
+        cur = b''
+        cur_l = 0
+        part += 1
+
+      cnk_l = len(cnk)
+      # print(line_l, cur_l, spc, part)
+      if cur_l < spc:
+        if cur_l + cnk_l > spc:
+          cur += cnk[:spc - cur_l]
+          nxt = cnk[spc - cur_l:]
+          write_splitted_video(src, part, cur)
+
+          cur = nxt
+          nxt = b''
+          cur_l = cnk_l - (spc - cur_l)
+          part += 1
+        else:
+          cur += cnk
+          cur_l += cnk_l
+
+    if cur:
+      write_splitted_video(src, part, cur)
+
+  # OLD
+  #
+  # start = 0
+  # end = spc
+  # while size > 0:
+  #   chunk_indexes.append((start, end))
+  #   start += spc
+  #   end += spc
+  #   size -= spc
+
+  # for i, (start_, end_) in enumerate(chunk_indexes):
+  #   filename = get_path(f'{src}.p{i+1}')
+  #   with open(filename, 'wb') as file:
+  #     file.write(data[start_:end_])
+  #     click.echo(f'generated {filename}')
 
 
-# TODO: try if merging into a large file is a problem
+# TODO: unable to merge into a large file
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
