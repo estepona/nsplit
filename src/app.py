@@ -5,12 +5,13 @@ from pathlib import Path
 from time import time
 
 import click
+import tqdm
 
 BYTES_PER_KB = 1_024
 BYTES_PER_MB = 1_048_576
 BYTES_PER_GB = 1_073_741_824
 
-MAX_BUFFER_SIZE = BYTES_PER_MB * 32
+MAX_BUFFER_SIZE = BYTES_PER_MB * 16
 
 KB_SUFFIX_LOWERCASE = 'kb'
 MB_SUFFIX_LOWERCASE = 'mb'
@@ -81,11 +82,10 @@ def split(src: str, chunk: int, size_per_chunk: str):
     click.echo('both --chunk and --size-per-chunk provided, using --chunk...')
   use_chunk = bool(chunk)
 
-  size = os.stat(src).st_size
-  chunk_indexes = []
+  src_size = os.stat(src).st_size
 
   if use_chunk:
-    spc = (size // chunk) if (size % chunk == 0) else (size // (chunk+1))
+    spc = (src_size // chunk) if (src_size % chunk == 0) else (src_size // (chunk-1))
   else:
     spc_num = int(size_per_chunk[:-2])
     spc_unit = size_per_chunk[-2:].lower()
@@ -97,57 +97,48 @@ def split(src: str, chunk: int, size_per_chunk: str):
     elif spc_unit == GB_SUFFIX_LOWERCASE:
       spc = spc_num * BYTES_PER_GB
 
+    chunk = (src_size // spc) if (src_size % spc == 0) else (src_size//spc + 1)
+
   chunk_size = min(spc, MAX_BUFFER_SIZE)
-  with open(src, 'rb') as f:
-    cur = b''
-    nxt = b''
-    cur_l = 0
-    part = 1
-  
-    # TODO: write to output file as we go and close it when done
+  cur_l = 0
+  part = 1
 
-    for cnk in read_in_chunks(f, chunk_size):
-      if cur_l == spc:
-        write_splitted_video(src, part, cur)
+  src_file = open(src, 'rb')
+  dst_file = open(f'{src}.p{part}', 'wb')
+  pbar = tqdm.tqdm(total=chunk)
 
-        cur = b''
-        cur_l = 0
+  for cnk in read_in_chunks(src_file, chunk_size):
+    if cur_l == spc:
+      dst_file.close()
+      pbar.update(1)
+
+      dst_file = open(f'{src}.p{part + 1}', 'wb')
+
+      cur_l = 0
+      part += 1
+
+    cnk_l = len(cnk)
+    if cur_l < spc:
+      if cur_l + cnk_l > spc:
+        dst_file.write(cnk[:spc - cur_l])
+        dst_file.close()
+        pbar.update(1)
+
+        dst_file = open(f'{src}.p{part + 1}', 'wb')
+        dst_file.write(cnk[spc - cur_l:])
+
+        cur_l = cnk_l - (spc-cur_l)
         part += 1
+      else:
+        dst_file.write(cnk)
+        cur_l += cnk_l
 
-      cnk_l = len(cnk)
-      # print(line_l, cur_l, spc, part)
-      if cur_l < spc:
-        if cur_l + cnk_l > spc:
-          cur += cnk[:spc - cur_l]
-          nxt = cnk[spc - cur_l:]
-          write_splitted_video(src, part, cur)
+  # TODO: if chunk is odd, pbar is off
 
-          cur = nxt
-          nxt = b''
-          cur_l = cnk_l - (spc - cur_l)
-          part += 1
-        else:
-          cur += cnk
-          cur_l += cnk_l
-
-    if cur:
-      write_splitted_video(src, part, cur)
-
-  # OLD
-  #
-  # start = 0
-  # end = spc
-  # while size > 0:
-  #   chunk_indexes.append((start, end))
-  #   start += spc
-  #   end += spc
-  #   size -= spc
-
-  # for i, (start_, end_) in enumerate(chunk_indexes):
-  #   filename = get_path(f'{src}.p{i+1}')
-  #   with open(filename, 'wb') as file:
-  #     file.write(data[start_:end_])
-  #     click.echo(f'generated {filename}')
+  src_file.close()
+  dst_file.close()
+  pbar.update(1)
+  pbar.close()
 
 
 # TODO: unable to merge into a large file
