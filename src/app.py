@@ -85,7 +85,8 @@ def split(src: str, chunk: int, size_per_chunk: str):
   src_size = os.stat(src).st_size
 
   if use_chunk:
-    spc = (src_size // chunk) if (src_size % chunk == 0) else (src_size // (chunk-1))
+    spc = (src_size // chunk) if (src_size % chunk == 0) else (src_size//chunk + 1)
+    # if size == 100, chunk == 3, chunk is reduced to 2, and only 2 parts are created
   else:
     spc_num = int(size_per_chunk[:-2])
     spc_unit = size_per_chunk[-2:].lower()
