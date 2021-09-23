@@ -86,7 +86,6 @@ def split(src: str, chunk: int, size_per_chunk: str):
 
   if use_chunk:
     spc = (src_size // chunk) if (src_size % chunk == 0) else (src_size//chunk + 1)
-    # if size == 100, chunk == 3, chunk is reduced to 2, and only 2 parts are created
   else:
     spc_num = int(size_per_chunk[:-2])
     spc_unit = size_per_chunk[-2:].lower()
@@ -134,15 +133,13 @@ def split(src: str, chunk: int, size_per_chunk: str):
         dst_file.write(cnk)
         cur_l += cnk_l
 
-  # TODO: if chunk is odd, pbar is off
-
   src_file.close()
   dst_file.close()
   pbar.update(1)
   pbar.close()
 
 
-# TODO: unable to merge into a large file
+# TODO: quality issue after merge
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
@@ -182,10 +179,7 @@ def merge(src: str, remove: bool):
     video = video_names[0]
 
   parts = sorted(videos[video], key=lambda x: x.suffix)
-  merged = b''
-  for p in parts:
-    with open(p, 'rb') as file:
-      merged += file.read()
+  pbar = tqdm.tqdm(total=len(parts))
 
   dst = parts[0].parent / parts[0].stem
   if dst.is_file():
@@ -193,14 +187,20 @@ def merge(src: str, remove: bool):
     extension = parts[0].stem.split('.')[1]
     dst = parts[0].parent / f'{filename}_copy.{extension}'
 
-  with open(dst, 'wb') as file:
-    file.write(merged)
-    click.echo(f'merged {dst}')
+  dst_file = open(dst, 'wb')
+  for p in parts:
+    with open(p, 'rb') as f:
+      for cnk in read_in_chunks(f, MAX_BUFFER_SIZE):
+        dst_file.write(cnk)
+    pbar.update(1)
+
+  dst_file.close()
+  pbar.close()
 
   if remove:
     for p in parts:
       os.remove(p)
-      click.echo(f'removed {p}')
+    click.echo('removed splitted files')
 
 
 if __name__ == '__main__':
