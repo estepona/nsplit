@@ -51,18 +51,7 @@ def cli():
   return
 
 
-# TODO: split large file causes problem
-@cli.command()
-@click.argument('src', nargs=1, type=click.Path(exists=True))
-@click.option('-c', '--chunk', type=int, help='number of chunks to output')
-@click.option('-s', '--size-per-chunk', type=str, help='size of each chunk')
-def split(src: str, chunk: int, size_per_chunk: str):
-  """ Split the video into several chunks by specifying EITHER:\n
-  - number of chunks with --chunk flag\n
-  - size of each chunk and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
-
-  SRC is the file path of the video to be splitted.
-  """
+def split_(src: str, chunk: int, size_per_chunk: str):
   if (not chunk) and (not size_per_chunk):
     click.echo('either --chunk or --size-per-chunk should be provided')
     return
@@ -104,15 +93,15 @@ def split(src: str, chunk: int, size_per_chunk: str):
   part = 1
 
   src_file = open(src, 'rb')
-  dst_file = open(f'{src}.p{part}', 'wb')
+  dst_files = [open(f'{src}.p{part}', 'wb')]
   pbar = tqdm.tqdm(total=chunk)
 
   for cnk in read_in_chunks(src_file, chunk_size):
     if cur_l == spc:
-      dst_file.close()
+      dst_files.pop().close()
       pbar.update(1)
 
-      dst_file = open(f'{src}.p{part + 1}', 'wb')
+      dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
 
       cur_l = 0
       part += 1
@@ -120,38 +109,43 @@ def split(src: str, chunk: int, size_per_chunk: str):
     cnk_l = len(cnk)
     if cur_l < spc:
       if cur_l + cnk_l > spc:
-        dst_file.write(cnk[:spc - cur_l])
-        dst_file.close()
+        dst_files[0].write(cnk[:spc - cur_l])
+        dst_files.pop().close()
         pbar.update(1)
 
-        dst_file = open(f'{src}.p{part + 1}', 'wb')
-        dst_file.write(cnk[spc - cur_l:])
+        dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
+        dst_files[0].write(cnk[spc - cur_l:])
 
         cur_l = cnk_l - (spc-cur_l)
         part += 1
       else:
-        dst_file.write(cnk)
+        dst_files[0].write(cnk)
         cur_l += cnk_l
 
   src_file.close()
-  dst_file.close()
+  dst_files.pop().close()
   pbar.update(1)
   pbar.close()
+  click.echo(f'splitted {src_file.name} into {chunk} chunks')
 
 
-# TODO: quality issue after merge
+# TODO: quality issue splitting files
+# TODO: 从第二个分区开始出问题
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
-@click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
-def merge(src: str, remove: bool):
-  """ Merge NVP splitted videos into one.
+@click.option('-c', '--chunk', type=int, help='number of chunks to output')
+@click.option('-s', '--size-per-chunk', type=str, help='size of each chunk')
+def split(src: str, chunk: int, size_per_chunk: str):
+  """ Split the video into several chunks by specifying EITHER:\n
+  - number of chunks with --chunk flag\n
+  - size of each chunk and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
 
-  NVP splitted videos can be identified with '.p1', '.p2' (etc.) appended to the original video's name (path).
-
-  If multiple videos that are splitted are found, user can choose which one to merge.
-
-  SRC is the directory path that contains (parent to) splitted videos.
+  SRC is the file path of the video to be splitted.
   """
+  split_(src, chunk, size_per_chunk)
+
+
+def merge_(src: str, remove: bool):
   dirpath = get_path(src)
 
   all_parts = list(dirpath.glob(SPLITTED_PARTS_PATTERN))
@@ -189,18 +183,37 @@ def merge(src: str, remove: bool):
 
   dst_file = open(dst, 'wb')
   for p in parts:
+    p_size = os.stat(p).st_size
     with open(p, 'rb') as f:
-      for cnk in read_in_chunks(f, MAX_BUFFER_SIZE):
-        dst_file.write(cnk)
+      dst_file.write(f.read())
+      # for cnk in read_in_chunks(f, min(p_size, MAX_BUFFER_SIZE)):
+      #   dst_file.write(cnk)
     pbar.update(1)
 
   dst_file.close()
   pbar.close()
+  click.echo(f'merged splitted files to {dst}')
 
   if remove:
     for p in parts:
       os.remove(p)
     click.echo('removed splitted files')
+
+
+# TODO: quality issue after merge
+@cli.command()
+@click.argument('src', nargs=1, type=click.Path(exists=True))
+@click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
+def merge(src: str, remove: bool):
+  """ Merge NVP splitted videos into one.
+
+  NVP splitted videos can be identified with '.p1', '.p2' (etc.) appended to the original video's name (path).
+
+  If multiple videos that are splitted are found, user can choose which one to merge.
+
+  SRC is the directory path that contains (parent to) splitted videos.
+  """
+  merge_(src, remove)
 
 
 if __name__ == '__main__':
