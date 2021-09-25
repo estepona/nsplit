@@ -2,7 +2,6 @@ import os
 from collections import defaultdict
 from os.path import abspath, normpath
 from pathlib import Path
-from time import time
 
 import click
 import tqdm
@@ -19,12 +18,6 @@ GB_SUFFIX_LOWERCASE = 'gb'
 
 SPLITTED_PARTS_PATTERN = '*.*.p*'
 
-START_TIME = time()
-
-
-def get_time_passed() -> int:
-  return int(time() - START_TIME)
-
 
 def get_path(path: str) -> Path:
   return Path(abspath(normpath(path)))
@@ -38,13 +31,6 @@ def read_in_chunks(file_object, chunk_size: int):
       break
 
     yield data
-
-
-def write_splitted_video(path: str, part: int, data: bytes):
-  filename = get_path(f'{path}.p{part}')
-  with open(filename, 'wb') as pf:
-    pf.write(data)
-    click.echo(f'[{get_time_passed()}s] generated {filename}')
 
 
 @click.group()
