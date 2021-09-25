@@ -34,6 +34,7 @@ def read_in_chunks(file_object, chunk_size: int):
   while True:
     data = file_object.read(chunk_size)
     if not data:
+      yield None
       break
 
     yield data
@@ -106,25 +107,27 @@ def split_(src: str, chunk: int, size_per_chunk: str):
       cur_l = 0
       part += 1
 
-    cnk_l = len(cnk)
-    if cur_l < spc:
-      if cur_l + cnk_l > spc:
-        dst_files[0].write(cnk[:spc - cur_l])
-        dst_files.pop().close()
-        pbar.update(1)
+    if cnk is not None:
+      cnk_l = len(cnk)
+      if cur_l < spc:
+        if cur_l + cnk_l > spc:
+          dst_files[0].write(cnk[:spc - cur_l])
+          dst_files.pop().close()
+          pbar.update(1)
 
-        dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
-        dst_files[0].write(cnk[spc - cur_l:])
+          dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
+          dst_files[0].write(cnk[spc - cur_l:])
 
-        cur_l = cnk_l - (spc-cur_l)
-        part += 1
-      else:
-        dst_files[0].write(cnk)
-        cur_l += cnk_l
+          cur_l = cnk_l - (spc-cur_l)
+          part += 1
+        else:
+          dst_files[0].write(cnk)
+          cur_l += cnk_l
 
   src_file.close()
-  dst_files.pop().close()
-  pbar.update(1)
+  if dst_files:
+    dst_files.pop().close()
+    pbar.update(1)
   pbar.close()
   click.echo(f'splitted {src_file.name} into {chunk} chunks')
 
@@ -172,7 +175,7 @@ def merge_(src: str, remove: bool):
   else:
     video = video_names[0]
 
-  parts = sorted(videos[video], key=lambda x: x.suffix)
+  parts = sorted(videos[video], key=lambda x: int(x.suffix.split('p')[1]))
   pbar = tqdm.tqdm(total=len(parts))
 
   dst = parts[0].parent / parts[0].stem
