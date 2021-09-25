@@ -94,16 +94,15 @@ def split_(src: str, chunk: int, size_per_chunk: str):
   part = 1
 
   src_file = open(src, 'rb')
-  dst_files = [open(f'{src}.p{part}', 'wb')]
+  dst_file = open(f'{src}.p{part}', 'wb')
   pbar = tqdm.tqdm(total=chunk)
 
   for cnk in read_in_chunks(src_file, chunk_size):
     if cur_l == spc:
-      dst_files.pop().close()
-      print(cur_l, part)
+      dst_file.close()
       pbar.update(1)
 
-      dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
+      dst_file = open(f'{src}.p{part + 1}', 'wb')
 
       cur_l = 0
       part += 1
@@ -112,28 +111,26 @@ def split_(src: str, chunk: int, size_per_chunk: str):
       cnk_l = len(cnk)
       if cur_l < spc:
         if cur_l + cnk_l > spc:
-          dst_files[0].write(cnk[:spc - cur_l])
-          dst_files.pop().close()
-          print(cur_l, part)
+          dst_file.write(cnk[:spc - cur_l])
+          dst_file.close()
           pbar.update(1)
 
-          dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
-          dst_files[0].write(cnk[spc - cur_l:])
+          dst_file = open(f'{src}.p{part + 1}', 'wb')
+          dst_file.write(cnk[spc - cur_l:])
 
           cur_l = cnk_l - (spc-cur_l)
           part += 1
         else:
-          dst_files[0].write(cnk)
+          dst_file.write(cnk)
           cur_l += cnk_l
 
   src_file.close()
-  if dst_files:
-    if dst_files[0].tell() == 0:
-      empty_file = dst_files.pop()
-      empty_file.close()
-      os.remove(empty_file.name)
+  if dst_file:
+    if dst_file.tell() == 0:
+      dst_file.close()
+      os.remove(dst_file.name)
     else:
-      dst_files.pop().close()
+      dst_file.close()
       pbar.update(1)
   pbar.close()
   click.echo(f'splitted {src_file.name} into {chunk} chunks')
@@ -193,9 +190,9 @@ def merge_(src: str, remove: bool):
   for p in parts:
     p_size = os.stat(p).st_size
     with open(p, 'rb') as f:
-      dst_file.write(f.read())
-      # for cnk in read_in_chunks(f, min(p_size, MAX_BUFFER_SIZE)):
-      #   dst_file.write(cnk)
+      for cnk in read_in_chunks(f, min(p_size, MAX_BUFFER_SIZE)):
+        if cnk:
+          dst_file.write(cnk)
     pbar.update(1)
 
   dst_file.close()
