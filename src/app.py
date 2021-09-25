@@ -100,6 +100,7 @@ def split_(src: str, chunk: int, size_per_chunk: str):
   for cnk in read_in_chunks(src_file, chunk_size):
     if cur_l == spc:
       dst_files.pop().close()
+      print(cur_l, part)
       pbar.update(1)
 
       dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
@@ -113,6 +114,7 @@ def split_(src: str, chunk: int, size_per_chunk: str):
         if cur_l + cnk_l > spc:
           dst_files[0].write(cnk[:spc - cur_l])
           dst_files.pop().close()
+          print(cur_l, part)
           pbar.update(1)
 
           dst_files.append(open(f'{src}.p{part + 1}', 'wb'))
@@ -126,14 +128,17 @@ def split_(src: str, chunk: int, size_per_chunk: str):
 
   src_file.close()
   if dst_files:
-    dst_files.pop().close()
-    pbar.update(1)
+    if dst_files[0].tell() == 0:
+      empty_file = dst_files.pop()
+      empty_file.close()
+      os.remove(empty_file.name)
+    else:
+      dst_files.pop().close()
+      pbar.update(1)
   pbar.close()
   click.echo(f'splitted {src_file.name} into {chunk} chunks')
 
 
-# TODO: quality issue splitting files
-# TODO: 从第二个分区开始出问题
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-c', '--chunk', type=int, help='number of chunks to output')
@@ -203,7 +208,6 @@ def merge_(src: str, remove: bool):
     click.echo('removed splitted files')
 
 
-# TODO: quality issue after merge
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
