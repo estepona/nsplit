@@ -2,10 +2,9 @@ import os
 
 import pytest
 
-from src.app import BYTES_PER_KB, BYTES_PER_MB, read_in_chunks, split_, merge_
+from src.app import BYTES_PER_MB, SPLITTED_PARTS_PATTERN, read_in_chunks, get_path, split_, merge_
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     'dirpath, src, dst, chunk',
     [
@@ -93,6 +92,97 @@ def test_size(dirpath, src, dst, chunk):
   os.remove(dst)
 
   assert srcfile_size == dstfile_size
+
+
+@pytest.mark.parametrize(
+    'dirpath, src, name, chunk',
+    [
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/dup.mov',
+            'dup.mov',
+            3,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/dup.mov',
+            'dup.mov',
+            5,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/dup.mov',
+            'dup.mov',
+            7,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/dup.mov',
+            'dup.mov',
+            10,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/mgs1.mp4',
+            'mgs1.mp4',
+            3,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/mgs1.mp4',
+            'mgs1.mp4',
+            5,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/mgs1.mp4',
+            'mgs1.mp4',
+            7,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/mgs1.mp4',
+            'mgs1.mp4',
+            10,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/medium.webm',
+            'medium.webm',
+            3,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/medium.webm',
+            'medium.webm',
+            5,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/medium.webm',
+            'medium.webm',
+            7,
+        ),
+        (
+            '/mnt/c/Users/estep/Videos/Captures',
+            '/mnt/c/Users/estep/Videos/Captures/medium.webm',
+            'medium.webm',
+            10,
+        ),
+    ],
+)
+def test_chunk(dirpath, src, name, chunk):
+  split_(src, chunk, '')
+
+  dirpath_ = get_path(dirpath)
+  all_parts = list(dirpath_.glob(SPLITTED_PARTS_PATTERN))
+  assert len(all_parts) > 0
+
+  splitted = [p for p in all_parts if p.stem == name]
+  assert len(splitted) == chunk
+
+  for s in splitted:
+    os.remove(s)
 
 
 @pytest.mark.parametrize(
@@ -187,13 +277,8 @@ def test_equal(dirpath, src, dst, chunk):
     dst_chunk = next(dst_chunk_gen)
 
     if (src_chunk is None) and (dst_chunk is None):
-      print(1)
       break
 
-    # if (src_chunk != dst_chunk):
-    #   print(src_chunk, '\n')
-    #   print(dst_chunk)
-    #   raise Exception
     assert src_chunk == dst_chunk
 
   srcfile.close()
