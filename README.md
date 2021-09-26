@@ -1,7 +1,7 @@
 <div align=center>
   <h1>Naive File Splitter</h1>
   <img src="https://img.shields.io/badge/nfs--estepona-0.2.0-blue"/>
-  <img src="https://img.shields.io/badge/python-3.*-blueviolet"/>
+  <img src="https://img.shields.io/badge/python->=3.4-blueviolet"/>
   <img src="https://img.shields.io/badge/click-7.0-brightgreen"/>
 </div>
 
