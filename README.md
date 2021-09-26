@@ -39,7 +39,7 @@ Options:
 
 #### Example
 
-###### Split a file into 5 chunks
+##### Split a file into 5 chunks
 
 `nfs split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4`
 
