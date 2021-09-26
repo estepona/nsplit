@@ -17,6 +17,8 @@ NFS requires *Python >= 3.4*.
 
 `pip install nfs-estepona`
 
+Upon installation, a new `nfs` binary will be added to system's path.
+
 ## Command
 
 ### Split
