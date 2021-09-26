@@ -16,7 +16,8 @@ KB_SUFFIX_LOWERCASE = 'kb'
 MB_SUFFIX_LOWERCASE = 'mb'
 GB_SUFFIX_LOWERCASE = 'gb'
 
-SPLITTED_PARTS_PATTERN = '*.*.p*'
+SPLITTED_CHUNKS_PREFIX = 'c'
+SPLITTED_CHUNKS_PATTERN = '*.*.c*'
 
 
 def get_path(path: str) -> Path:
@@ -76,11 +77,11 @@ def split_(src: str, chunk: int, size_per_chunk: str):
     chunk = (src_size // spc) if (src_size % spc == 0) else (src_size//spc + 1)
 
   chunk_size = min(spc, MAX_BUFFER_SIZE)
+  chunk_index = 1
   cur_l = 0
-  part = 1
 
   src_file = open(src, 'rb')
-  dst_file = open(f'{src}.p{part}', 'wb')
+  dst_file = open(f'{src}.{SPLITTED_CHUNKS_PREFIX}{chunk_index}', 'wb')
   pbar = tqdm.tqdm(total=chunk)
 
   for cnk in read_in_chunks(src_file, chunk_size):
@@ -88,10 +89,10 @@ def split_(src: str, chunk: int, size_per_chunk: str):
       dst_file.close()
       pbar.update(1)
 
-      dst_file = open(f'{src}.p{part + 1}', 'wb')
+      dst_file = open(f'{src}.{SPLITTED_CHUNKS_PREFIX}{chunk_index + 1}', 'wb')
 
       cur_l = 0
-      part += 1
+      chunk_index += 1
 
     if cnk is not None:
       cnk_l = len(cnk)
@@ -101,11 +102,11 @@ def split_(src: str, chunk: int, size_per_chunk: str):
           dst_file.close()
           pbar.update(1)
 
-          dst_file = open(f'{src}.p{part + 1}', 'wb')
+          dst_file = open(f'{src}.{SPLITTED_CHUNKS_PREFIX}{chunk_index + 1}', 'wb')
           dst_file.write(cnk[spc - cur_l:])
 
           cur_l = cnk_l - (spc-cur_l)
-          part += 1
+          chunk_index += 1
         else:
           dst_file.write(cnk)
           cur_l += cnk_l
@@ -127,11 +128,11 @@ def split_(src: str, chunk: int, size_per_chunk: str):
 @click.option('-c', '--chunk', type=int, help='number of chunks to output')
 @click.option('-s', '--size-per-chunk', type=str, help='size of each chunk')
 def split(src: str, chunk: int, size_per_chunk: str):
-  """ Split the video into several chunks by specifying EITHER:\n
+  """ Split the file into several chunks by specifying EITHER:\n
   - number of chunks with --chunk flag\n
   - size of each chunk and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
 
-  SRC is the file path of the video to be splitted.
+  SRC is the filepath.
   """
   split_(src, chunk, size_per_chunk)
 
@@ -139,43 +140,43 @@ def split(src: str, chunk: int, size_per_chunk: str):
 def merge_(src: str, remove: bool):
   dirpath = get_path(src)
 
-  all_parts = list(dirpath.glob(SPLITTED_PARTS_PATTERN))
-  if not all_parts:
-    click.echo('no splitted video parts found')
+  all_chunks = list(dirpath.glob(SPLITTED_CHUNKS_PATTERN))
+  if not all_chunks:
+    click.echo('no splitted file chunks found')
     return
 
-  videos = defaultdict(list)
-  for p in all_parts:
-    name = p.stem
-    videos[name].append(p)
+  files = defaultdict(list)
+  for c in all_chunks:
+    name = c.stem
+    files[name].append(c)
 
-  video_names = list(videos.keys())
-  if len(video_names) >= 2:
-    question = f'found {len(video_names)} splitted videos, choose one to proceed:\n'
-    for i, v in enumerate(video_names):
+  file_names = list(files.keys())
+  if len(file_names) >= 2:
+    question = f'found {len(file_names)} splitted file chunks, choose one to proceed:\n'
+    for i, v in enumerate(file_names):
       question += f'{i+1} - {v}\n'
     question += 'your answer'
 
-    video_choice = click.prompt(question, type=int)
-    while (video_choice > len(video_names)) or (video_choice < 1):
-      video_choice = click.prompt('incorrect input, please try again', type=int)
-    video = video_names[video_choice - 1]
+    file_choice = click.prompt(question, type=int)
+    while (file_choice > len(file_names)) or (file_choice < 1):
+      file_choice = click.prompt('incorrect input, please try again', type=int)
+    file = file_names[file_choice - 1]
   else:
-    video = video_names[0]
+    file = file_names[0]
 
-  parts = sorted(videos[video], key=lambda x: int(x.suffix.split('p')[1]))
-  pbar = tqdm.tqdm(total=len(parts))
+  chunks = sorted(files[file], key=lambda x: int(x.suffix.split(SPLITTED_CHUNKS_PREFIX)[1]))
+  pbar = tqdm.tqdm(total=len(chunks))
 
-  dst = parts[0].parent / parts[0].stem
+  dst = chunks[0].parent / chunks[0].stem
   if dst.is_file():
-    filename = parts[0].stem.split('.')[0]
-    extension = parts[0].stem.split('.')[1]
-    dst = parts[0].parent / f'{filename}_copy.{extension}'
+    filename = chunks[0].stem.split('.')[0]
+    extension = chunks[0].stem.split('.')[1]
+    dst = chunks[0].parent / f'{filename}_copy.{extension}'
 
   dst_file = open(dst, 'wb')
-  for p in parts:
-    p_size = os.stat(p).st_size
-    with open(p, 'rb') as f:
+  for c in chunks:
+    p_size = os.stat(c).st_size
+    with open(c, 'rb') as f:
       for cnk in read_in_chunks(f, min(p_size, MAX_BUFFER_SIZE)):
         if cnk:
           dst_file.write(cnk)
@@ -183,25 +184,25 @@ def merge_(src: str, remove: bool):
 
   dst_file.close()
   pbar.close()
-  click.echo(f'merged splitted files to {dst}')
+  click.echo(f'merged splitted file chunks to {dst}')
 
   if remove:
-    for p in parts:
-      os.remove(p)
-    click.echo('removed splitted files')
+    for c in chunks:
+      os.remove(c)
+    click.echo('removed splitted file chunks')
 
 
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
-@click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted files after merge')
+@click.option('-r', '--remove', default=False, is_flag=True, help='remove splitted file chunks after merge')
 def merge(src: str, remove: bool):
-  """ Merge NVP splitted videos into one.
+  """ Merge NFS splitted file chunks into one.
 
-  NVP splitted videos can be identified with '.p1', '.p2' (etc.) appended to the original video's name (path).
+  NFS splitted file chunks can be identified with '.p1', '.p2' (etc.) appended to the original file's name (path).
 
-  If multiple videos that are splitted are found, user can choose which one to merge.
+  If multiple files that are splitted are found, user can choose which one to merge.
 
-  SRC is the directory path that contains (parent to) splitted videos.
+  SRC is the directory path that contains (parent to) splitted file chunks.
   """
   merge_(src, remove)
 

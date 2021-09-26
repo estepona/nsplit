@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from src.app import BYTES_PER_MB, SPLITTED_PARTS_PATTERN, read_in_chunks, get_path, split_, merge_
+from src.app import BYTES_PER_MB, SPLITTED_CHUNKS_PATTERN, read_in_chunks, get_path, split_, merge_
 
 
 @pytest.mark.parametrize(
@@ -175,10 +175,10 @@ def test_chunk(dirpath, src, name, chunk):
   split_(src, chunk, '')
 
   dirpath_ = get_path(dirpath)
-  all_parts = list(dirpath_.glob(SPLITTED_PARTS_PATTERN))
-  assert len(all_parts) > 0
+  all_chunks = list(dirpath_.glob(SPLITTED_CHUNKS_PATTERN))
+  assert len(all_chunks) > 0
 
-  splitted = [p for p in all_parts if p.stem == name]
+  splitted = [p for p in all_chunks if p.stem == name]
   assert len(splitted) == chunk
 
   for s in splitted:
