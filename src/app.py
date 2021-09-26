@@ -198,9 +198,11 @@ def merge_(src: str, remove: bool):
 def merge(src: str, remove: bool):
   """ Merge NFS splitted file chunks into one.
 
-  NFS splitted file chunks can be identified with '.p1', '.p2' (etc.) appended to the original file's name (path).
+  NFS splitted file chunks can be identified with '.c1', '.c2' (etc.) appended to the end of original file's name (path).
 
   If multiple files that are splitted are found, user can choose which one to merge.
+
+  If the original file exists under the same directory, a new file with '_copy' appended to the filename will be created.
 
   SRC is the directory path that contains (parent to) splitted file chunks.
   """
