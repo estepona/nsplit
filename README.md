@@ -3,6 +3,7 @@
   <img src="https://img.shields.io/badge/nfs--estepona-0.2.*-blue"/>
   <img src="https://img.shields.io/badge/python->=3.5-blueviolet"/>
   <img src="https://img.shields.io/badge/click-7.0-brightgreen"/>
+  <img src="./assets/banner.png">
 </div>
 
 Naive File Splitter (NFS) is a simple CLI tool to split a file into several smaller chunks at data level and merge them back. It does not compress or transform the original file in any way. NFS only reads the file in binary stream and writes it into chunks whose number or size is given by the user.
@@ -44,7 +45,7 @@ Options:
 `nfs split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4`
 
 ```bash
-$ nfs split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4 -c 5
+$ nfs split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4
 100%|█████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:00<00:00, 37.28it/s]
 splitted /mnt/c/Users/estep/Videos/Captures/mgs1.mp4 into 5 chunks
 ```
