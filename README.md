@@ -5,11 +5,11 @@
   <img src="https://img.shields.io/badge/click-7.0-brightgreen"/>
 </div>
 
-Naive File Splitter is a simple utility tool to split a file into several smaller chunks at data level and merge them back. It does not compress or transform the original file in any way. NFS only reads the file in binary stream and writes it into chunks whose number or size is given by the user.
+Naive File Splitter (NFS) is a simple CLI tool to split a file into several smaller chunks at data level and merge them back. It does not compress or transform the original file in any way. NFS only reads the file in binary stream and writes it into chunks whose number or size is given by the user.
 
 By having smaller chunks of a file instead of a large one, it allows easier and faster data download and upload, and bypasses file size limits inplaced by some cloud providers.
 
-NFS works with *any* file formats.
+NFS works with *any* file format.
 
 ## Install
 
@@ -26,8 +26,8 @@ NFS requires *Python >= 3.4*.
 `nfs split [OPTIONS] SRC`
 
 Split the file into several chunks by specifying EITHER:
-- number of chunks with --chunk flag
-- size of each chunk and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
+- number of chunks with `--chunk` flag
+- size of each chunk with `--size-per-chunk` flag, and the number of chunks is calculated accordingly, i.e. *5kb*, *10mb*, *1gb*
 
 `SRC` is the filepath.
 
@@ -65,11 +65,11 @@ splitted /mnt/c/Users/estep/Videos/Captures/medium.webm into 18 chunks
 
 Merge NFS splitted file chunks into one.
 
-NFS splitted file chunks can be identified with '.c1', '.c2' (etc.) appended to the end of original file's name (path).
+NFS splitted file chunks can be identified with *.c1*, *.c2* (etc.) appended to the end of original file's name (path).
 
 If multiple files that are splitted are found, user can choose which one to merge.
 
-If the original file exists under the same directory, a new file with '_copy' appended to the filename will be created.
+If the original file exists under the same directory, a new file with *_copy* appended to the filename will be created.
 
 `SRC` is the directory path that contains (parent to) splitted file chunks.
 

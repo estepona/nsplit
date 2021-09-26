@@ -130,7 +130,7 @@ def split_(src: str, chunk: int, size_per_chunk: str):
 def split(src: str, chunk: int, size_per_chunk: str):
   """ Split the file into several chunks by specifying EITHER:\n
   - number of chunks with --chunk flag\n
-  - size of each chunk and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
+  - size of each chunk with --size-per-chunk flag, and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
 
   SRC is the filepath.
   """
