@@ -36,7 +36,7 @@ Split the file into several chunks by specifying EITHER:
 
 Options:
 - `-c, --chunk`, *INTEGER*, number of chunks to output
-- `-s, --size-per-chunk`, *TEXT*, size of each chunk
+- `-s, --size`, *TEXT*, size of each chunk
 
 #### Example
 

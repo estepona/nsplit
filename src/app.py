@@ -39,24 +39,24 @@ def cli():
   return
 
 
-def split_(src: str, chunk: int, size_per_chunk: str):
-  if (not chunk) and (not size_per_chunk):
-    click.echo('either --chunk or --size-per-chunk should be provided')
+def split_(src: str, chunk: int, size: str):
+  if (not chunk) and (not size):
+    click.echo('either --chunk or --size should be provided')
     return
   if chunk and chunk <= 1:
     click.echo('--chunk has to be greater than 1')
     return
-  if size_per_chunk:
-    if (len(size_per_chunk) <= 2) or\
-       (size_per_chunk[-2:].lower() not in {KB_SUFFIX_LOWERCASE, MB_SUFFIX_LOWERCASE, GB_SUFFIX_LOWERCASE}):
-      click.echo('--chunk-per-size has to end with kb/KB, mb/MB, or gb/GB')
+  if size:
+    if (len(size) <= 2) or\
+       (size[-2:].lower() not in {KB_SUFFIX_LOWERCASE, MB_SUFFIX_LOWERCASE, GB_SUFFIX_LOWERCASE}):
+      click.echo('--size has to end with kb/KB, mb/MB, or gb/GB')
       return
-    elif int(size_per_chunk[:-2]) <= 0:
-      click.echo('--chunk-per-size has to be greater than 0')
+    elif int(size[:-2]) <= 0:
+      click.echo('--size has to be greater than 0')
       return
 
-  if chunk and size_per_chunk:
-    click.echo('both --chunk and --size-per-chunk provided, using --chunk...')
+  if chunk and size:
+    click.echo('both --chunk and --size provided, using --chunk...')
   use_chunk = bool(chunk)
 
   src_size = os.stat(src).st_size
@@ -64,8 +64,8 @@ def split_(src: str, chunk: int, size_per_chunk: str):
   if use_chunk:
     spc = (src_size // chunk) if (src_size % chunk == 0) else (src_size//chunk + 1)
   else:
-    spc_num = int(size_per_chunk[:-2])
-    spc_unit = size_per_chunk[-2:].lower()
+    spc_num = int(size[:-2])
+    spc_unit = size[-2:].lower()
 
     if spc_unit == KB_SUFFIX_LOWERCASE:
       spc = spc_num * BYTES_PER_KB
@@ -126,15 +126,15 @@ def split_(src: str, chunk: int, size_per_chunk: str):
 @cli.command()
 @click.argument('src', nargs=1, type=click.Path(exists=True))
 @click.option('-c', '--chunk', type=int, help='number of chunks to output')
-@click.option('-s', '--size-per-chunk', type=str, help='size of each chunk')
-def split(src: str, chunk: int, size_per_chunk: str):
+@click.option('-s', '--size', type=str, help='size of each chunk')
+def split(src: str, chunk: int, size: str):
   """ Split the file into several chunks by specifying EITHER:\n
   - number of chunks with --chunk flag\n
-  - size of each chunk with --size-per-chunk flag, and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
+  - size of each chunk with --size flag, and the number of chunks is calculated accordingly, i.e. 5kb, 10mb, 1gb
 
   SRC is the filepath.
   """
-  split_(src, chunk, size_per_chunk)
+  split_(src, chunk, size)
 
 
 def merge_(src: str, remove: bool):
