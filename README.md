@@ -6,19 +6,19 @@
   <img src="./assets/banner.png">
 </div>
 
-Naive File Splitter (NFS) is a simple CLI tool to split a file into several smaller chunks at data level and merge them back. It does not compress or transform the original file in any way. NFS only reads the file in binary stream and writes it into chunks whose number or size is given by the user.
+Naive File Splitter is a simple CLI tool to split a file into several smaller chunks at data level and merge them back. It does not compress or transform the original file in any way. NFS only reads the file in binary stream and writes it into chunks whose number or size is given by the user.
 
 By having smaller chunks of a file instead of a large one, it allows easier and faster data download and upload, and bypasses file size limits inplaced by some cloud providers.
 
-NFS works with *any* file format.
+Naive File Splitter works with *any* file format.
 
 ## Install
 
-NFS requires *Python >= 3.5*.
+Naive File Splitter requires *Python >= 3.5*.
 
 `pip install nfs-estepona`
 
-Upon installation, a new `nfs` binary will be added to system's path.
+Upon installation, a new `nsplit` binary will be added to system's path.
 
 ## Command
 
@@ -26,7 +26,7 @@ Upon installation, a new `nfs` binary will be added to system's path.
 
 #### Usage
 
-`nfs split [OPTIONS] SRC`
+`nsplit split [OPTIONS] SRC`
 
 Split the file into several chunks by specifying EITHER:
 - number of chunks with `--chunk` flag
@@ -42,20 +42,20 @@ Options:
 
 ##### Split a file into 5 chunks
 
-`nfs split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4`
+`nsplit split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4`
 
 ```bash
-$ nfs split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4
+$ nsplit split -c 5 /mnt/c/Users/estep/Videos/Captures/mgs1.mp4
 100%|█████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:00<00:00, 37.28it/s]
 splitted /mnt/c/Users/estep/Videos/Captures/mgs1.mp4 into 5 chunks
 ```
 
 ##### Split a file into chunks of 25MB each
 
-`nfs split -s 25mb /mnt/c/Users/estep/Videos/Captures/medium.webm`
+`nsplit split -s 25mb /mnt/c/Users/estep/Videos/Captures/medium.webm`
 
 ```bash
-$ nfs split -s 25mb /mnt/c/Users/estep/Videos/Captures/medium.webm
+$ nsplit split -s 25mb /mnt/c/Users/estep/Videos/Captures/medium.webm
 100%|███████████████████████████████████████████████████████████████████████████████████| 18/18 [00:08<00:00,  2.00it/s]
 splitted /mnt/c/Users/estep/Videos/Captures/medium.webm into 18 chunks
 ```
@@ -64,7 +64,7 @@ splitted /mnt/c/Users/estep/Videos/Captures/medium.webm into 18 chunks
 
 #### Usage
 
-`nfs merge [OPTIONS] SRC`
+`nsplit merge [OPTIONS] SRC`
 
 Merge NFS splitted file chunks into one.
 
@@ -83,19 +83,19 @@ Options:
 
 ##### Merge splitted file chunks into one
 
-`nfs merge /mnt/c/Users/estep/Videos/Captures`
+`nsplit merge /mnt/c/Users/estep/Videos/Captures`
 
 ```bash
-$ nfs merge /mnt/c/Users/estep/Videos/Captures
+$ nsplit merge /mnt/c/Users/estep/Videos/Captures
 100%|█████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:00<00:00, 50.87it/s]
 merged splitted file chunks to /mnt/c/Users/estep/Videos/Captures/mgs1_copy.mp4
 ```
 ##### Merge splitted file chunks into one and remove chunks
 
-`nfs merge -r /mnt/c/Users/estep/Videos/Captures`
+`nsplit merge -r /mnt/c/Users/estep/Videos/Captures`
 
 ```bash
-$ nfs merge -r /mnt/c/Users/estep/Videos/Captures
+$ nsplit merge -r /mnt/c/Users/estep/Videos/Captures
 100%|█████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:00<00:00, 49.96it/s]
 merged splitted file chunks to /mnt/c/Users/estep/Videos/Captures/mgs1_copy.mp4
 removed splitted file chunks
@@ -103,10 +103,10 @@ removed splitted file chunks
 
 ##### Merge splitted file chunks into one where chunks of other files exist
 
-`nfs merge /mnt/c/Users/estep/Videos/Captures`
+`nsplit merge /mnt/c/Users/estep/Videos/Captures`
 
 ```bash
-$ nfs merge /mnt/c/Users/estep/Videos/Captures
+$ nsplit merge /mnt/c/Users/estep/Videos/Captures
 found 2 splitted file chunks, choose one to proceed:
 1 - dup.mov
 2 - mgs1.mp4
