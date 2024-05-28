@@ -1,22 +1,22 @@
 <div align=center>
-  <h1>Naive File Splitter</h1>
-  <img src="https://img.shields.io/badge/nfs--estepona-0.3.*-blue"/>
+  <h1>nsplit</h1>
+  <img src="https://img.shields.io/badge/nsplit-0.3.*-blue"/>
   <img src="https://img.shields.io/badge/python->=3.5-blueviolet"/>
   <img src="https://img.shields.io/badge/click-7.0-brightgreen"/>
   <img src="./assets/banner.png">
 </div>
 
-Naive File Splitter is a simple CLI tool to split a file into several smaller chunks at data level and merge them back. It does not compress or transform the original file in any way. NFS only reads the file in binary stream and writes it into chunks whose number or size is given by the user.
+nsplit (Naive Splitter) is a simple CLI tool to split a file into several smaller chunks at data level and merge them back. It does not compress or transform the original file in any way. NFS only reads the file in binary stream and writes it into chunks whose number or size is given by the user.
 
 By having smaller chunks of a file instead of a large one, it allows easier and faster data download and upload, and bypasses file size limits inplaced by some cloud providers.
 
-Naive File Splitter works with *any* file format.
+nsplit works with *any* file format.
 
 ## Install
 
-Naive File Splitter requires *Python >= 3.5*.
+nsplit requires *Python >= 3.5*.
 
-`pip install nfs-estepona`
+`pip install nsplit`
 
 Upon installation, a new `nsplit` binary will be added to system's path.
 
